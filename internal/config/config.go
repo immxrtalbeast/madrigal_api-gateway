@@ -3,12 +3,42 @@ package config
 import (
 	"flag"
 	"os"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Env string `yaml:"env" env-default:"local"`
+	Env           string              `yaml:"env" env-default:"local"`
+	AppSecret     string              `yaml:"app_secret" env:"APP_SECRET"`
+	TokenTTL      time.Duration       `yaml:"token_ttl" env-default:"10m"`
+	HTTP          HTTPConfig          `yaml:"http"`
+	AuthGRPC      AuthGRPCConfig      `yaml:"auth_grpc"`
+	ScriptService ScriptServiceConfig `yaml:"script_service"`
+	VideoService  VideoServiceConfig  `yaml:"video_service"`
+}
+
+type HTTPConfig struct {
+	Host         string        `yaml:"host" env-default:"0.0.0.0"`
+	Port         int           `yaml:"port" env-default:"8080"`
+	ReadTimeout  time.Duration `yaml:"read_timeout" env-default:"5s"`
+	WriteTimeout time.Duration `yaml:"write_timeout" env-default:"5s"`
+	IdleTimeout  time.Duration `yaml:"idle_timeout" env-default:"60s"`
+}
+
+type AuthGRPCConfig struct {
+	Address string        `yaml:"address" env-required:"true"`
+	Timeout time.Duration `yaml:"timeout" env-default:"5s"`
+}
+
+type ScriptServiceConfig struct {
+	BaseURL string        `yaml:"base_url" env-required:"true"`
+	Timeout time.Duration `yaml:"timeout" env-default:"10s"`
+}
+
+type VideoServiceConfig struct {
+	BaseURL string        `yaml:"base_url" env-required:"true"`
+	Timeout time.Duration `yaml:"timeout" env-default:"10s"`
 }
 
 func MustLoad() *Config {

@@ -1,1 +1,18 @@
 env: "dev"
+app_secret: "zombie_madrigal"
+token_ttl: 1m
+http:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: 5s
+  write_timeout: 5s
+  idle_timeout: 60s
+auth_grpc:
+  address: "auth-service:44045"
+  timeout: 5s
+script_service:
+  base_url: "http://llm-script-service:8002"
+  timeout: 10s
+video_service:
+  base_url: "http://video-service:8100"
+  timeout: 10s

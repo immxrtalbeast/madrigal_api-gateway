@@ -1,1 +1,18 @@
 env: "local"
+app_secret: "zombie_madrigal"
+token_ttl: 10m
+http:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: 5s
+  write_timeout: 5s
+  idle_timeout: 60s
+auth_grpc:
+  address: "127.0.0.1:44045"
+  timeout: 5s
+script_service:
+  base_url: "http://127.0.0.1:8002"
+  timeout: 10s
+video_service:
+  base_url: "http://127.0.0.1:8100"
+  timeout: 10s
