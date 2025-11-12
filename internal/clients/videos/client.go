@@ -84,6 +84,14 @@ func (c *Client) ListMedia(ctx context.Context, folder string, headers map[strin
 	return c.do(ctx, http.MethodGet, endpoint, nil, headers)
 }
 
+func (c *Client) ListSharedMedia(ctx context.Context, folder string) (*Response, error) {
+	endpoint := c.baseURL + "/media/shared"
+	if folder != "" {
+		endpoint = endpoint + "?folder=" + url.QueryEscape(folder)
+	}
+	return c.do(ctx, http.MethodGet, endpoint, nil, nil)
+}
+
 func (c *Client) do(ctx context.Context, method, endpoint string, payload []byte, extraHeaders map[string]string) (*Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(payload))
 	if err != nil {

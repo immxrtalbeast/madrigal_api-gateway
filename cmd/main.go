@@ -262,6 +262,7 @@ func setupRouter(
 		videos.POST("/:id/subtitles:approve", videoHandler.ApproveSubtitles)
 		videos.POST("/media", videoHandler.UploadMedia)
 		videos.GET("/media", videoHandler.ListMedia)
+		videos.GET("/media/shared", videoHandler.ListSharedMedia)
 		videos.GET("/:id/stream", videoHandler.StreamVideo)
 	}
 
