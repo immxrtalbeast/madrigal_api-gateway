@@ -16,6 +16,7 @@ import (
 	"github.com/immxrtalbeast/api-gateway/internal/clients/scripts"
 	"github.com/immxrtalbeast/api-gateway/internal/clients/videos"
 	"github.com/immxrtalbeast/api-gateway/internal/config"
+	"github.com/immxrtalbeast/api-gateway/internal/events"
 	"github.com/immxrtalbeast/api-gateway/internal/http/handlers"
 	"github.com/immxrtalbeast/api-gateway/internal/http/middleware"
 	"github.com/immxrtalbeast/api-gateway/lib/logger/slogpretty"
@@ -70,7 +71,36 @@ func main() {
 
 	authHandler := handlers.NewAuthHandler(log, authClient, cfg.AuthGRPC.Timeout, cfg.TokenTTL)
 	scriptHandler := handlers.NewScriptHandler(log, scriptClient, cfg.ScriptService.Timeout)
-	videoHandler := handlers.NewVideoHandler(log, videoClient, cfg.VideoService.Timeout)
+	var (
+		streamHub     *events.Hub
+		kafkaConsumer *events.KafkaConsumer
+	)
+	if cfg.Kafka.Enabled {
+		if len(cfg.Kafka.Brokers) == 0 {
+			log.Error("kafka brokers are not configured")
+			os.Exit(1)
+		}
+		streamHub = events.NewHub()
+		consumer, err := events.NewKafkaConsumer(
+			events.KafkaConsumerConfig{
+				Brokers: cfg.Kafka.Brokers,
+				Topic:   cfg.Kafka.UpdatesTopic,
+				GroupID: cfg.Kafka.GroupID,
+				MaxWait: cfg.Kafka.MaxWait,
+			},
+			streamHub,
+			log,
+		)
+		if err != nil {
+			log.Error("failed to init kafka consumer", slog.String("err", err.Error()))
+			os.Exit(1)
+		}
+		kafkaConsumer = consumer
+		kafkaConsumer.Run(ctx)
+		defer kafkaConsumer.Close()
+	}
+
+	videoHandler := handlers.NewVideoHandler(log, videoClient, cfg.VideoService.Timeout, streamHub)
 	authMiddleware := middleware.AuthMiddleware(cfg.AppSecret)
 
 	router := setupRouter(cfg.Env, authHandler, scriptHandler, videoHandler, authMiddleware)

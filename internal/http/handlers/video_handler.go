@@ -14,17 +14,19 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/immxrtalbeast/api-gateway/internal/clients/videos"
+	"github.com/immxrtalbeast/api-gateway/internal/events"
 	"golang.org/x/net/websocket"
 )
 
 type VideoHandler struct {
-	log     *slog.Logger
-	client  *videos.Client
-	timeout time.Duration
+	log       *slog.Logger
+	client    *videos.Client
+	timeout   time.Duration
+	streamHub *events.Hub
 }
 
-func NewVideoHandler(log *slog.Logger, client *videos.Client, timeout time.Duration) *VideoHandler {
-	return &VideoHandler{log: log, client: client, timeout: timeout}
+func NewVideoHandler(log *slog.Logger, client *videos.Client, timeout time.Duration, hub *events.Hub) *VideoHandler {
+	return &VideoHandler{log: log, client: client, timeout: timeout, streamHub: hub}
 }
 
 func (h *VideoHandler) CreateVideo(c *gin.Context) {
@@ -111,18 +113,57 @@ func (h *VideoHandler) ApproveDraft(c *gin.Context) {
 
 func (h *VideoHandler) StreamVideo(c *gin.Context) {
 	jobID := c.Param("id")
-	ctx := c.Request.Context()
-
 	ws := websocket.Server{
 		Handshake: func(config *websocket.Config, req *http.Request) error {
 			return nil
 		},
 		Handler: func(conn *websocket.Conn) {
 			defer conn.Close()
+			ctx := c.Request.Context()
+			if h.streamHub != nil {
+				h.handleKafkaStream(ctx, conn, jobID)
+				return
+			}
 			h.handleVideoStream(ctx, conn, jobID)
 		},
 	}
 	ws.ServeHTTP(c.Writer, c.Request)
+}
+
+func (h *VideoHandler) handleKafkaStream(ctx context.Context, conn *websocket.Conn, jobID string) {
+	body, stage, err := h.fetchJobSnapshot(ctx, jobID)
+	if err != nil {
+		websocket.Message.Send(conn, fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+		return
+	}
+	if err := websocket.Message.Send(conn, string(body)); err != nil {
+		return
+	}
+	if stage == "ready" || stage == "failed" {
+		return
+	}
+	updates, cancel := h.streamHub.Subscribe(jobID)
+	defer cancel()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case payload, ok := <-updates:
+			if !ok {
+				return
+			}
+			if err := websocket.Message.Send(conn, string(payload)); err != nil {
+				return
+			}
+			nextStage, err := extractStage(payload)
+			if err != nil {
+				continue
+			}
+			if nextStage == "ready" || nextStage == "failed" {
+				return
+			}
+		}
+	}
 }
 
 func (h *VideoHandler) handleVideoStream(ctx context.Context, conn *websocket.Conn, jobID string) {

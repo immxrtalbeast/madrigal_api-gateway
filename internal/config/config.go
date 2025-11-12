@@ -16,6 +16,7 @@ type Config struct {
 	AuthGRPC      AuthGRPCConfig      `yaml:"auth_grpc"`
 	ScriptService ScriptServiceConfig `yaml:"script_service"`
 	VideoService  VideoServiceConfig  `yaml:"video_service"`
+	Kafka         KafkaConfig         `yaml:"kafka"`
 }
 
 type HTTPConfig struct {
@@ -39,6 +40,14 @@ type ScriptServiceConfig struct {
 type VideoServiceConfig struct {
 	BaseURL string        `yaml:"base_url" env-required:"true"`
 	Timeout time.Duration `yaml:"timeout" env-default:"10s"`
+}
+
+type KafkaConfig struct {
+	Enabled      bool          `yaml:"enabled" env-default:"false"`
+	Brokers      []string      `yaml:"brokers" env:"KAFKA_BROKERS" env-separator:","`
+	UpdatesTopic string        `yaml:"updates_topic" env-default:"video_updates"`
+	GroupID      string        `yaml:"group_id" env-default:"api-gateway-video-stream"`
+	MaxWait      time.Duration `yaml:"max_wait" env-default:"500ms"`
 }
 
 func MustLoad() *Config {

@@ -16,3 +16,10 @@ script_service:
 video_service:
   base_url: "http://127.0.0.1:8100"
   timeout: 10s
+kafka:
+  enabled: false
+  brokers:
+    - "127.0.0.1:9092"
+  updates_topic: "video_updates"
+  group_id: "api-gateway-video-stream"
+  max_wait: 500ms

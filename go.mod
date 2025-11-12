@@ -9,6 +9,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/immxrtalbeast/protos v0.0.0-20251003182435-61b42f2e2d89
 	github.com/joho/godotenv v1.5.1
+	github.com/segmentio/kafka-go v0.4.49
 	golang.org/x/net v0.41.0
 	google.golang.org/grpc v1.75.1
 )
