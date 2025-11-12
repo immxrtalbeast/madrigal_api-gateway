@@ -228,6 +228,7 @@ func setupRouter(
 		videos.POST("", videoHandler.CreateVideo)
 		videos.GET("", videoHandler.ListVideos)
 		videos.GET("/:id", videoHandler.GetVideo)
+		videos.GET("/:id/stream", videoHandler.StreamVideo)
 	}
 
 	ideas := router.Group("/api/ideas")
