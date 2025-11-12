@@ -65,6 +65,13 @@ func (c *Client) ApproveDraft(ctx context.Context, videoID string, payload []byt
 	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/draft:approve", payload)
 }
 
+func (c *Client) ApproveSubtitles(ctx context.Context, videoID string, payload []byte) (*Response, error) {
+	if videoID == "" {
+		return nil, fmt.Errorf("videoID is required")
+	}
+	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/subtitles:approve", payload)
+}
+
 func (c *Client) UploadMedia(ctx context.Context, payload []byte) (*Response, error) {
 	return c.do(ctx, http.MethodPost, c.baseURL+"/media", payload)
 }
