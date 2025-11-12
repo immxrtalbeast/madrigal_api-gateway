@@ -176,6 +176,19 @@ func (h *VideoHandler) ListSharedMedia(c *gin.Context) {
 	forwardResponse(c, resp)
 }
 
+func (h *VideoHandler) ListVoices(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+	defer cancel()
+
+	resp, err := h.client.ListVoices(ctx)
+	if err != nil {
+		h.log.Error("voices list failed", slog.String("err", err.Error()))
+		writeError(c, http.StatusBadGateway, "video service error")
+		return
+	}
+	forwardResponse(c, resp)
+}
+
 func (h *VideoHandler) StreamVideo(c *gin.Context) {
 	jobID := c.Param("id")
 	ws := websocket.Server{
