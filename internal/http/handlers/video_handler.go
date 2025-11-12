@@ -90,6 +90,25 @@ func (h *VideoHandler) ExpandIdea(c *gin.Context) {
 	forwardResponse(c, resp)
 }
 
+func (h *VideoHandler) ApproveDraft(c *gin.Context) {
+	jobID := c.Param("id")
+	body, err := readJSONBody(c.Request.Body)
+	if err != nil {
+		writeError(c, http.StatusBadRequest, "failed to read request body")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+	defer cancel()
+
+	resp, err := h.client.ApproveDraft(ctx, jobID, body)
+	if err != nil {
+		h.log.Error("draft approve failed", slog.String("err", err.Error()))
+		writeError(c, http.StatusBadGateway, "video service error")
+		return
+	}
+	forwardResponse(c, resp)
+}
+
 func (h *VideoHandler) StreamVideo(c *gin.Context) {
 	jobID := c.Param("id")
 	ctx := c.Request.Context()

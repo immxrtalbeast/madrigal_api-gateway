@@ -58,6 +58,13 @@ func (c *Client) ExpandIdea(ctx context.Context, payload []byte) (*Response, err
 	return c.do(ctx, http.MethodPost, c.baseURL+"/ideas:expand", payload)
 }
 
+func (c *Client) ApproveDraft(ctx context.Context, videoID string, payload []byte) (*Response, error) {
+	if videoID == "" {
+		return nil, fmt.Errorf("videoID is required")
+	}
+	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/draft:approve", payload)
+}
+
 func (c *Client) do(ctx context.Context, method, endpoint string, payload []byte) (*Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(payload))
 	if err != nil {
