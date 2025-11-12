@@ -39,58 +39,64 @@ func New(baseURL string, timeout time.Duration) (*Client, error) {
 	}, nil
 }
 
-func (c *Client) CreateVideo(ctx context.Context, payload []byte) (*Response, error) {
-	return c.do(ctx, http.MethodPost, c.baseURL+"/videos", payload)
+func (c *Client) CreateVideo(ctx context.Context, payload []byte, headers map[string]string) (*Response, error) {
+	return c.do(ctx, http.MethodPost, c.baseURL+"/videos", payload, headers)
 }
 
-func (c *Client) ListVideos(ctx context.Context) (*Response, error) {
-	return c.do(ctx, http.MethodGet, c.baseURL+"/videos", nil)
+func (c *Client) ListVideos(ctx context.Context, headers map[string]string) (*Response, error) {
+	return c.do(ctx, http.MethodGet, c.baseURL+"/videos", nil, headers)
 }
 
-func (c *Client) GetVideo(ctx context.Context, videoID string) (*Response, error) {
+func (c *Client) GetVideo(ctx context.Context, videoID string, headers map[string]string) (*Response, error) {
 	if videoID == "" {
 		return nil, fmt.Errorf("videoID is required")
 	}
-	return c.do(ctx, http.MethodGet, c.baseURL+"/videos/"+videoID, nil)
+	return c.do(ctx, http.MethodGet, c.baseURL+"/videos/"+videoID, nil, headers)
 }
 
-func (c *Client) ExpandIdea(ctx context.Context, payload []byte) (*Response, error) {
-	return c.do(ctx, http.MethodPost, c.baseURL+"/ideas:expand", payload)
+func (c *Client) ExpandIdea(ctx context.Context, payload []byte, headers map[string]string) (*Response, error) {
+	return c.do(ctx, http.MethodPost, c.baseURL+"/ideas:expand", payload, headers)
 }
 
-func (c *Client) ApproveDraft(ctx context.Context, videoID string, payload []byte) (*Response, error) {
+func (c *Client) ApproveDraft(ctx context.Context, videoID string, payload []byte, headers map[string]string) (*Response, error) {
 	if videoID == "" {
 		return nil, fmt.Errorf("videoID is required")
 	}
-	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/draft:approve", payload)
+	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/draft:approve", payload, headers)
 }
 
-func (c *Client) ApproveSubtitles(ctx context.Context, videoID string, payload []byte) (*Response, error) {
+func (c *Client) ApproveSubtitles(ctx context.Context, videoID string, payload []byte, headers map[string]string) (*Response, error) {
 	if videoID == "" {
 		return nil, fmt.Errorf("videoID is required")
 	}
-	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/subtitles:approve", payload)
+	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/subtitles:approve", payload, headers)
 }
 
-func (c *Client) UploadMedia(ctx context.Context, payload []byte) (*Response, error) {
-	return c.do(ctx, http.MethodPost, c.baseURL+"/media", payload)
+func (c *Client) UploadMedia(ctx context.Context, payload []byte, headers map[string]string) (*Response, error) {
+	return c.do(ctx, http.MethodPost, c.baseURL+"/media", payload, headers)
 }
 
-func (c *Client) ListMedia(ctx context.Context, folder string) (*Response, error) {
+func (c *Client) ListMedia(ctx context.Context, folder string, headers map[string]string) (*Response, error) {
 	endpoint := c.baseURL + "/media"
 	if folder != "" {
 		endpoint = endpoint + "?folder=" + url.QueryEscape(folder)
 	}
-	return c.do(ctx, http.MethodGet, endpoint, nil)
+	return c.do(ctx, http.MethodGet, endpoint, nil, headers)
 }
 
-func (c *Client) do(ctx context.Context, method, endpoint string, payload []byte) (*Response, error) {
+func (c *Client) do(ctx context.Context, method, endpoint string, payload []byte, extraHeaders map[string]string) (*Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 	if payload != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	for key, value := range extraHeaders {
+		if value == "" {
+			continue
+		}
+		req.Header.Set(key, value)
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {

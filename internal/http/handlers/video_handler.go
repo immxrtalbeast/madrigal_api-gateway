@@ -38,7 +38,7 @@ func (h *VideoHandler) CreateVideo(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.CreateVideo(ctx, body)
+	resp, err := h.client.CreateVideo(ctx, body, userHeaders(c))
 	if err != nil {
 		h.log.Error("video create failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "video service error")
@@ -51,7 +51,7 @@ func (h *VideoHandler) ListVideos(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.ListVideos(ctx)
+	resp, err := h.client.ListVideos(ctx, userHeaders(c))
 	if err != nil {
 		h.log.Error("list videos failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "video service error")
@@ -65,7 +65,7 @@ func (h *VideoHandler) GetVideo(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.GetVideo(ctx, videoID)
+	resp, err := h.client.GetVideo(ctx, videoID, userHeaders(c))
 	if err != nil {
 		h.log.Error("get video failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "video service error")
@@ -83,7 +83,7 @@ func (h *VideoHandler) ExpandIdea(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.ExpandIdea(ctx, body)
+	resp, err := h.client.ExpandIdea(ctx, body, userHeaders(c))
 	if err != nil {
 		h.log.Error("idea expand failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "idea service error")
@@ -102,7 +102,7 @@ func (h *VideoHandler) ApproveDraft(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.ApproveDraft(ctx, jobID, body)
+	resp, err := h.client.ApproveDraft(ctx, jobID, body, userHeaders(c))
 	if err != nil {
 		h.log.Error("draft approve failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "video service error")
@@ -121,7 +121,7 @@ func (h *VideoHandler) ApproveSubtitles(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.ApproveSubtitles(ctx, jobID, body)
+	resp, err := h.client.ApproveSubtitles(ctx, jobID, body, userHeaders(c))
 	if err != nil {
 		h.log.Error("subtitles approve failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "video service error")
@@ -139,7 +139,7 @@ func (h *VideoHandler) UploadMedia(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.UploadMedia(ctx, body)
+	resp, err := h.client.UploadMedia(ctx, body, userHeaders(c))
 	if err != nil {
 		h.log.Error("media upload failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "video service error")
@@ -153,7 +153,7 @@ func (h *VideoHandler) ListMedia(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()
 
-	resp, err := h.client.ListMedia(ctx, folder)
+	resp, err := h.client.ListMedia(ctx, folder, userHeaders(c))
 	if err != nil {
 		h.log.Error("media list failed", slog.String("err", err.Error()))
 		writeError(c, http.StatusBadGateway, "video service error")
@@ -259,7 +259,7 @@ func (h *VideoHandler) handleVideoStream(ctx context.Context, conn *websocket.Co
 func (h *VideoHandler) fetchJobSnapshot(ctx context.Context, jobID string) ([]byte, string, error) {
 	reqCtx, cancel := context.WithTimeout(ctx, h.timeout)
 	defer cancel()
-	resp, err := h.client.GetVideo(reqCtx, jobID)
+	resp, err := h.client.GetVideo(reqCtx, jobID, nil)
 	if err != nil {
 		return nil, "", err
 	}
@@ -290,6 +290,18 @@ func readJSONBody(body io.Reader) ([]byte, error) {
 		return nil, nil
 	}
 	return io.ReadAll(io.LimitReader(body, 1<<20))
+}
+
+func userHeaders(c *gin.Context) map[string]string {
+	userIDVal, exists := c.Get("userID")
+	if !exists {
+		return nil
+	}
+	userID := fmt.Sprint(userIDVal)
+	if userID == "" {
+		return nil
+	}
+	return map[string]string{"X-User-ID": userID}
 }
 
 func forwardResponse(c *gin.Context, resp *videos.Response) {
