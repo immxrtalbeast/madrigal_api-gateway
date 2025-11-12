@@ -65,6 +65,18 @@ func (c *Client) ApproveDraft(ctx context.Context, videoID string, payload []byt
 	return c.do(ctx, http.MethodPost, c.baseURL+"/videos/"+videoID+"/draft:approve", payload)
 }
 
+func (c *Client) UploadMedia(ctx context.Context, payload []byte) (*Response, error) {
+	return c.do(ctx, http.MethodPost, c.baseURL+"/media", payload)
+}
+
+func (c *Client) ListMedia(ctx context.Context, folder string) (*Response, error) {
+	endpoint := c.baseURL + "/media"
+	if folder != "" {
+		endpoint = endpoint + "?folder=" + url.QueryEscape(folder)
+	}
+	return c.do(ctx, http.MethodGet, endpoint, nil)
+}
+
 func (c *Client) do(ctx context.Context, method, endpoint string, payload []byte) (*Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(payload))
 	if err != nil {

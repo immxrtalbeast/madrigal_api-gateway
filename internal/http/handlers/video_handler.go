@@ -111,6 +111,38 @@ func (h *VideoHandler) ApproveDraft(c *gin.Context) {
 	forwardResponse(c, resp)
 }
 
+func (h *VideoHandler) UploadMedia(c *gin.Context) {
+	body, err := readJSONBody(c.Request.Body)
+	if err != nil {
+		writeError(c, http.StatusBadRequest, "failed to read request body")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+	defer cancel()
+
+	resp, err := h.client.UploadMedia(ctx, body)
+	if err != nil {
+		h.log.Error("media upload failed", slog.String("err", err.Error()))
+		writeError(c, http.StatusBadGateway, "video service error")
+		return
+	}
+	forwardResponse(c, resp)
+}
+
+func (h *VideoHandler) ListMedia(c *gin.Context) {
+	folder := c.Query("folder")
+	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+	defer cancel()
+
+	resp, err := h.client.ListMedia(ctx, folder)
+	if err != nil {
+		h.log.Error("media list failed", slog.String("err", err.Error()))
+		writeError(c, http.StatusBadGateway, "video service error")
+		return
+	}
+	forwardResponse(c, resp)
+}
+
 func (h *VideoHandler) StreamVideo(c *gin.Context) {
 	jobID := c.Param("id")
 	ws := websocket.Server{
