@@ -176,6 +176,52 @@ func (h *VideoHandler) ListSharedMedia(c *gin.Context) {
 	forwardResponse(c, resp)
 }
 
+func (h *VideoHandler) UploadVideoMedia(c *gin.Context) {
+    body, err := readJSONBody(c.Request.Body)
+    if err != nil {
+        writeError(c, http.StatusBadRequest, "failed to read request body")
+        return
+    }
+    ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+    defer cancel()
+
+    resp, err := h.client.UploadVideoMedia(ctx, body, userHeaders(c))
+    if err != nil {
+        h.log.Error("video media upload failed", slog.String("err", err.Error()))
+        writeError(c, http.StatusBadGateway, "video service error")
+        return
+    }
+    forwardResponse(c, resp)
+}
+
+func (h *VideoHandler) ListVideoMedia(c *gin.Context) {
+    folder := c.Query("folder")
+    ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+    defer cancel()
+
+    resp, err := h.client.ListVideoMedia(ctx, folder, userHeaders(c))
+    if err != nil {
+        h.log.Error("video media list failed", slog.String("err", err.Error()))
+        writeError(c, http.StatusBadGateway, "video service error")
+        return
+    }
+    forwardResponse(c, resp)
+}
+
+func (h *VideoHandler) ListSharedVideoMedia(c *gin.Context) {
+    folder := c.Query("folder")
+    ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+    defer cancel()
+
+    resp, err := h.client.ListSharedVideoMedia(ctx, folder)
+    if err != nil {
+        h.log.Error("shared video media list failed", slog.String("err", err.Error()))
+        writeError(c, http.StatusBadGateway, "video service error")
+        return
+    }
+    forwardResponse(c, resp)
+}
+
 func (h *VideoHandler) ListVoices(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
 	defer cancel()

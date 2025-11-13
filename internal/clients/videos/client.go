@@ -93,11 +93,31 @@ func (c *Client) ListSharedMedia(ctx context.Context, folder string) (*Response,
 }
 
 func (c *Client) ListVoices(ctx context.Context) (*Response, error) {
-	return c.do(ctx, http.MethodGet, c.baseURL+"/voices", nil, nil)
+    return c.do(ctx, http.MethodGet, c.baseURL+"/voices", nil, nil)
 }
 
 func (c *Client) ListMusic(ctx context.Context) (*Response, error) {
-	return c.do(ctx, http.MethodGet, c.baseURL+"/music", nil, nil)
+    return c.do(ctx, http.MethodGet, c.baseURL+"/music", nil, nil)
+}
+
+func (c *Client) UploadVideoMedia(ctx context.Context, payload []byte, headers map[string]string) (*Response, error) {
+    return c.do(ctx, http.MethodPost, c.baseURL+"/media/videos", payload, headers)
+}
+
+func (c *Client) ListVideoMedia(ctx context.Context, folder string, headers map[string]string) (*Response, error) {
+    endpoint := c.baseURL + "/media/videos"
+    if folder != "" {
+        endpoint = endpoint + "?folder=" + url.QueryEscape(folder)
+    }
+    return c.do(ctx, http.MethodGet, endpoint, nil, headers)
+}
+
+func (c *Client) ListSharedVideoMedia(ctx context.Context, folder string) (*Response, error) {
+    endpoint := c.baseURL + "/media/shared/videos"
+    if folder != "" {
+        endpoint = endpoint + "?folder=" + url.QueryEscape(folder)
+    }
+    return c.do(ctx, http.MethodGet, endpoint, nil, nil)
 }
 
 func (c *Client) do(ctx context.Context, method, endpoint string, payload []byte, extraHeaders map[string]string) (*Response, error) {
