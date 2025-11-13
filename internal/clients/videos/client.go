@@ -96,6 +96,10 @@ func (c *Client) ListVoices(ctx context.Context) (*Response, error) {
 	return c.do(ctx, http.MethodGet, c.baseURL+"/voices", nil, nil)
 }
 
+func (c *Client) ListMusic(ctx context.Context) (*Response, error) {
+	return c.do(ctx, http.MethodGet, c.baseURL+"/music", nil, nil)
+}
+
 func (c *Client) do(ctx context.Context, method, endpoint string, payload []byte, extraHeaders map[string]string) (*Response, error) {
 	req, err := http.NewRequestWithContext(ctx, method, endpoint, bytes.NewReader(payload))
 	if err != nil {
