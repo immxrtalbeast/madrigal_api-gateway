@@ -214,6 +214,7 @@ func setupRouter(
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{
 		"http://localhost:3000",
+		"http://87.228.89.123:3000",
 	}
 	config.AllowCredentials = true
 	config.AllowHeaders = []string{
