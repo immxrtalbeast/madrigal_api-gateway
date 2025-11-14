@@ -104,6 +104,34 @@ func (c *Client) UploadVideoMedia(ctx context.Context, payload []byte, headers m
     return c.do(ctx, http.MethodPost, c.baseURL+"/media/videos", payload, headers)
 }
 
+func (c *Client) UploadVideoBinary(ctx context.Context, body []byte, contentType string, headers map[string]string) (*Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/media/videos:upload", bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("create request: %w", err)
+	}
+	req.Header.Set("Content-Type", contentType)
+	for key, value := range headers {
+		if value == "" {
+			continue
+		}
+		req.Header.Set(key, value)
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("video service request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read video service response: %w", err)
+	}
+	return &Response{
+		StatusCode: resp.StatusCode,
+		Body:       bodyBytes,
+		Header:     resp.Header.Clone(),
+	}, nil
+}
+
 func (c *Client) ListVideoMedia(ctx context.Context, folder string, headers map[string]string) (*Response, error) {
     endpoint := c.baseURL + "/media/videos"
     if folder != "" {

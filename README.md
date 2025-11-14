@@ -6,7 +6,7 @@ Go‑прокси на базе Gin объединяет auth-service (gRPC), ll
 ## Основные возможности
 - `/api/auth/*` — регистрация, логин, обновление/логаут токенов, получение профиля и проверки роли.
 - `/api/scripts` — защищённый прокси к llm-script-service.
-- `/api/videos`, `/api/ideas/expand` — защищённый прокси к video-service (включая каталоги `/voices` и `/music`, работу с медиа и стрим статусов).
+- `/api/videos`, `/api/ideas/expand` — защищённый прокси к video-service (включая каталоги `/voices` и `/music`, работу с медиа и стрим статусов). Для загрузки пользовательских видео теперь есть два варианта: JSON (`/api/videos/media/videos`) и `multipart/form-data` (`/api/videos/media/videos:upload`), так что фронт может отсылать крупные mp4 без base64.
 - `/healthz` — проверочный эндпоинт для оркестраторов.
 
 ## Технологии

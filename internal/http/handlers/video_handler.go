@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"strings"
 	"time"
@@ -192,6 +194,60 @@ func (h *VideoHandler) UploadVideoMedia(c *gin.Context) {
         return
     }
     forwardResponse(c, resp)
+}
+
+func (h *VideoHandler) UploadVideoBinary(c *gin.Context) {
+	if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+		writeError(c, http.StatusBadRequest, "failed to parse multipart form")
+		return
+	}
+	folder := c.PostForm("folder")
+	if folder == "" {
+		writeError(c, http.StatusBadRequest, "folder is required")
+		return
+	}
+	file, header, err := c.Request.FormFile("file")
+	if err != nil {
+		writeError(c, http.StatusBadRequest, "file is required")
+		return
+	}
+	defer file.Close()
+	payload := &bytes.Buffer{}
+	writer := multipart.NewWriter(payload)
+	if err := writer.WriteField("folder", folder); err != nil {
+		writeError(c, http.StatusInternalServerError, "failed to encode folder")
+		return
+	}
+	if name := c.PostForm("filename"); name != "" {
+		if err := writer.WriteField("filename", name); err != nil {
+			writeError(c, http.StatusInternalServerError, "failed to encode filename")
+			return
+		}
+	}
+	part, err := writer.CreateFormFile("file", header.Filename)
+	if err != nil {
+		writeError(c, http.StatusInternalServerError, "failed to prepare file part")
+		return
+	}
+	if _, err := io.Copy(part, file); err != nil {
+		writeError(c, http.StatusInternalServerError, "failed to copy file")
+		return
+	}
+	if err := writer.Close(); err != nil {
+		writeError(c, http.StatusInternalServerError, "failed to finalize form")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), h.timeout)
+	defer cancel()
+
+	resp, err := h.client.UploadVideoBinary(ctx, payload.Bytes(), writer.FormDataContentType(), userHeaders(c))
+	if err != nil {
+		h.log.Error("video binary upload failed", slog.String("err", err.Error()))
+		writeError(c, http.StatusBadGateway, "video service error")
+		return
+	}
+	forwardResponse(c, resp)
 }
 
 func (h *VideoHandler) ListVideoMedia(c *gin.Context) {

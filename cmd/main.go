@@ -264,6 +264,7 @@ func setupRouter(
 		videos.GET("/media", videoHandler.ListMedia)
 		videos.GET("/media/shared", videoHandler.ListSharedMedia)
 		videos.POST("/media/videos", videoHandler.UploadVideoMedia)
+		videos.POST("/media/videos:upload", videoHandler.UploadVideoBinary)
 		videos.GET("/media/videos", videoHandler.ListVideoMedia)
 		videos.GET("/media/shared/videos", videoHandler.ListSharedVideoMedia)
 		videos.GET("/voices", videoHandler.ListVoices)
